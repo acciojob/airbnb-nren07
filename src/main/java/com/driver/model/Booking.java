@@ -29,9 +29,6 @@ public class Booking {
         this.noOfRooms = noOfRooms;
         this.bookingPersonName = bookingPersonName;
         this.hotelName = hotelName;
-        UUID uuid=UUID.randomUUID();
-        String id=uuid.toString();
-        this.bookingId=id;
     }
 
     public String getBookingId() {

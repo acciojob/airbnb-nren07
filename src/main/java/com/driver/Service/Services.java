@@ -23,30 +23,60 @@ public class Services {
     }
 
     public String getHotelWithMostFacilities(){
-        List<Hotel>hotelList=repositoryClassObj.getListOfHotel();
-        Collections.sort(hotelList,(a,b)->{
-            int cmp=b.getFacilities().size()-
-            a.getFacilities().size();
-            if(cmp!=0) return cmp;
-            else return a.getHotelName().compareTo(b.getHotelName());
-        });
-        if(hotelList.size()>0) return hotelList.get(0).getHotelName();
-        return "";
+        int maxFacility=0;
+        String hotelName="";
+        Map<String,Hotel>hotelDb=repositoryClassObj.getHotelDb();
+        for(String id : hotelDb.keySet()){
+            int facility=hotelDb.get(id).getFacilities().size();
+            if(facility>maxFacility) hotelName=hotelDb.get(id).getHotelName();
+            else if(facility==maxFacility){
+                if(hotelName.compareTo(hotelDb.get(id).getHotelName())<0){
+                    hotelName=hotelName;
+                }else{
+                    hotelName=hotelDb.get(id).getHotelName();
+                }
+            }
+        }
+        return hotelName;
+
     }
 
     public int bookingRoom(Booking booking){
-        for(Hotel hotel : repositoryClassObj.getListOfHotel()){
+        Map<String,Hotel> hotelMap=repositoryClassObj.getHotelDb();
+        for(Hotel hotel : hotelMap.values()){
             if(hotel.getHotelName().equals(booking.getHotelName())){
                 int availRoom=hotel.getAvailableRooms();
-                int bookRoom=booking.getNoOfRooms();
-
-                if(bookRoom>availRoom) return -1;
+                int bookRooms=booking.getNoOfRooms();
+                if(bookRooms>availRoom) return -1;
                 else{
-                    hotel.setAvailableRooms(availRoom-bookRoom);
-                    return repositoryClassObj.newBooking(booking,hotel);
+                    String bookingId=UUID.randomUUID().toString();
+                    int aadharId=booking.getBookingAadharCard();
+                    booking.setBookingId(bookingId);
+                    repositoryClassObj.setBookingInDb(bookingId,booking);
+                    repositoryClassObj.setCountBookingInDb(aadharId);
+                    hotel.setAvailableRooms(availRoom-bookRooms);
+                    int amountToBePaid=bookRooms*hotel.getPricePerNight();
+                    return  hotel.getPricePerNight()*bookRooms;
                 }
             }
         }
         return -1;
+    }
+    public int getBooking(int adharId){
+        Map<Integer,Integer>countDbBooking=repositoryClassObj.getCountBookingDb();
+        return countDbBooking.get(adharId);
+    }
+
+    public Hotel updateFacility(List<Facility> newFacilities,String hotelName){
+        Map<String,Hotel>hotelMap=repositoryClassObj.getHotelDb();
+        List<Facility>oldFacilities=hotelMap.get(hotelName).getFacilities();
+        for(Facility facility : newFacilities){
+            if(oldFacilities.contains(facility)) continue;
+            else oldFacilities.add(facility);
+        }
+        Hotel hotel=hotelMap.get(hotelName);
+        hotel.setFacilities(oldFacilities);
+        hotelMap.put(hotelName,hotel);
+        return hotel;
     }
 }
